@@ -1,0 +1,23 @@
+node_modules/
+dist/
+.cache/
+.DS_Store
+*.log
+coverage/
+.idea/
+.vscode/
+.claude/
+
+# Local-only test inputs (real-world assets used by e2e + bindpose tests).
+# Drop your own .obj / .glb / texture files into test/_assets/ — tests that
+# need them check existsSync() and skip gracefully when absent.
+test/_assets/
+test/output/
+
+# Generated FBX dumps from e2e tests.
+out/
+
+# Internal milestone / audit log (not part of the published package).
+PROGRESS.md
+oracle-skinned.test.mjs
+oracle-cube.test.mjs
