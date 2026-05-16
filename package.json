@@ -1,0 +1,80 @@
+{
+  "name": "@comfyorg/fbx-exporter-three",
+  "version": "1.0.0",
+  "description": "FBX exporter for three.js scenes — Blender-parity binary FBX writer with full skinning, animation, morph targets, lights, cameras and texture embedding.",
+  "keywords": [
+    "fbx",
+    "fbx-exporter",
+    "three",
+    "three.js",
+    "3d",
+    "exporter",
+    "blender",
+    "unity",
+    "unreal",
+    "skinning",
+    "skeleton",
+    "animation",
+    "morph-targets",
+    "blendshape",
+    "comfyui"
+  ],
+  "author": {
+    "name": "Comfy Org",
+    "email": "support@comfy.org"
+  },
+  "license": "MIT",
+  "homepage": "https://comfy.org",
+  "bugs": {
+    "url": "https://github.com/comfy-org/fbx-exporter-three/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/comfy-org/fbx-exporter-three.git"
+  },
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx test/m1-binary-layer.test.mjs && node --import tsx test/m1-fbxloader-binary.test.mjs && node --import tsx test/m1-deep-audit.test.mjs && node --import tsx test/m2-integration.test.mjs && node --import tsx test/m2-deep-audit.test.mjs && node --import tsx test/m3-mesh-roundtrip.test.mjs && node --import tsx test/m3-edge-cases.test.mjs && node --import tsx test/m3-deep-audit.test.mjs && node --import tsx test/m3-multiuv.test.mjs && node --import tsx test/m5-skinning.test.mjs && node --import tsx test/m5-deep-audit.test.mjs && node --import tsx test/m5-bindpose-recovery.test.mjs && node --import tsx test/m6-animation.test.mjs && node --import tsx test/m6-deep-audit.test.mjs && node --import tsx test/m7-morph.test.mjs && node --import tsx test/m7-deep-audit.test.mjs && node --import tsx test/m8-light-camera.test.mjs && node --import tsx test/m8-deep-audit.test.mjs && node --import tsx test/m9-texture.test.mjs && node --import tsx test/m9-deep-audit.test.mjs && node --import tsx test/m4-axis-units.test.mjs && node --import tsx test/m4-deep-audit.test.mjs && node --import tsx test/m4-light-camera-direction.test.mjs && node --import tsx test/oracle-blender-cube.test.mjs && node --import tsx test/oracle-blender-skinned.test.mjs && node --import tsx test/m9-slot-roundtrip.test.mjs && node --import tsx test/options.test.mjs",
+    "prepublishOnly": "npm run typecheck && npm run build && npm test"
+  },
+  "peerDependencies": {
+    "three": ">=0.160.0",
+    "@types/three": ">=0.160.0"
+  },
+  "peerDependenciesMeta": {
+    "@types/three": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "fflate": "^0.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "^25.8.0",
+    "@types/three": "^0.184.1",
+    "three": "^0.184.0",
+    "tsx": "^4.22.0",
+    "typescript": "^6.0.3"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}
