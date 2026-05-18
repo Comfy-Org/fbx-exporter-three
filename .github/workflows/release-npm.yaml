@@ -1,0 +1,122 @@
+name: Release NPM
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g. 1.0.1). Must match package.json.'
+        required: true
+        type: string
+      dist_tag:
+        description: 'npm dist-tag'
+        required: true
+        default: latest
+        type: string
+      ref:
+        description: 'Git ref to publish (commit SHA, tag, or branch). Defaults to refs/tags/v<version>.'
+        required: false
+        type: string
+
+concurrency:
+  group: release-npm-${{ inputs.version }}-${{ inputs.dist_tag }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish @comfyorg/fbx-exporter-three
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Validate version
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ inputs.version }}"
+          SEMVER='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$'
+          if [[ ! "$VERSION" =~ $SEMVER ]]; then
+            echo "::error title=Invalid version::'$VERSION' is not valid SemVer" >&2
+            exit 1
+          fi
+
+      - name: Resolve ref
+        id: resolve_ref
+        shell: bash
+        run: |
+          set -euo pipefail
+          REF="${{ inputs.ref }}"
+          if [ -n "$REF" ]; then
+            git check-ref-format --allow-onelevel "$REF" || {
+              echo "::error title=Invalid ref::'$REF' fails git check-ref-format" >&2
+              exit 1
+            }
+            echo "ref=$REF" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=refs/tags/v${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.resolve_ref.outputs.ref }}
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify package.json version matches input
+        shell: bash
+        run: |
+          set -euo pipefail
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          if [ "$PKG_VERSION" != "${{ inputs.version }}" ]; then
+            echo "::error title=Version mismatch::package.json is $PKG_VERSION, input is ${{ inputs.version }}" >&2
+            exit 1
+          fi
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
+
+      - name: Verify package contents
+        run: npm pack --dry-run
+
+      - name: Check if already on npm
+        id: check_npm
+        shell: bash
+        run: |
+          set -euo pipefail
+          NAME=$(node -p "require('./package.json').name")
+          VER="${{ inputs.version }}"
+          STATUS=0
+          OUTPUT=$(npm view "${NAME}@${VER}" version --json 2>&1) || STATUS=$?
+          if [ "$STATUS" -eq 0 ] && [ -n "$OUTPUT" ] && [ "$OUTPUT" != "null" ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Already published::${NAME}@${VER} already on npm. Skipping publish."
+          elif echo "$OUTPUT" | grep -qE "E404|code.*404"; then
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          elif [ "$STATUS" -ne 0 ]; then
+            echo "::error title=Registry lookup failed::$OUTPUT" >&2
+            exit "$STATUS"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish
+        if: steps.check_npm.outputs.exists == 'false'
+        run: npm publish --access public --tag "${{ inputs.dist_tag }}" --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
