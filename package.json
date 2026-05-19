@@ -1,6 +1,6 @@
 {
   "name": "@comfyorg/fbx-exporter-three",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "FBX exporter for three.js scenes — binary FBX writer with full skinning, animation, morph targets, lights, cameras and texture embedding.",
   "keywords": [
     "fbx",
@@ -26,11 +26,11 @@
   "license": "MIT",
   "homepage": "https://comfy.org",
   "bugs": {
-    "url": "https://github.com/comfy-org/fbx-exporter-three/issues"
+    "url": "https://github.com/Comfy-Org/fbx-exporter-three/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/comfy-org/fbx-exporter-three.git"
+    "url": "git+https://github.com/Comfy-Org/fbx-exporter-three.git"
   },
   "type": "module",
   "main": "./dist/index.js",
