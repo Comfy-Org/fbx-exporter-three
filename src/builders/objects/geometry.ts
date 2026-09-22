@@ -153,7 +153,7 @@ function attributeToPerLoop(geometry, attr, itemSize) {
  *        deduped on export.
  */
 export function writeGeometry(ctx) {
-  const { parent, geometry, uid, name, templates, materialSlotCount = 0, groups = [], slotRemap, transformCtx } = ctx;
+  const { parent, geometry, uid, name, templates, materialSlotCount = 0, groups = [], slotRemap, transformCtx, flipUV = false } = ctx;
   const bake = transformCtx && transformCtx.bake && !transformCtx.isIdentity;
 
   const geom = parent.addEmpty('Geometry');
@@ -199,7 +199,7 @@ export function writeGeometry(ctx) {
   for (const uvName of ['uv', 'uv1', 'uv2', 'uv3']) {
     if (geometry.attributes[uvName]) uvSets.push(uvName);
   }
-  uvSets.forEach((uvName, i) => writeUVLayer(geom, geometry, uvName, i));
+  uvSets.forEach((uvName, i) => writeUVLayer(geom, geometry, uvName, i, flipUV));
 
   let wroteMaterial = false;
   if (materialSlotCount > 0) {
@@ -246,7 +246,15 @@ function writeNormalLayer(geom, geometry, bakeCtx) {
   elemDataSingleInt32Array(layer, 'NormalsIndex', idx);
 }
 
-function writeUVLayer(geom, geometry, attrName, layerIndex) {
+/**
+ * LayerElementUV — ByPolygonVertex + IndexToDirect.
+ *
+ * FBX puts the UV origin at the bottom-left. three.js keeps whatever the source
+ * format used and compensates when sampling via `texture.flipY`, so a glTF
+ * scene (flipY false, origin top-left) has to be flipped on the way out while
+ * an FBX-sourced scene (flipY true, origin already bottom-left) must not be.
+ */
+function writeUVLayer(geom, geometry, attrName, layerIndex, flipUV) {
   const layer = elemDataSingleInt32(geom, 'LayerElementUV', layerIndex);
   elemDataSingleInt32(layer, 'Version', FBX_GEOMETRY_UV_VERSION);
   elemDataSingleString(layer, 'Name', attrName === 'uv' ? 'UVMap' : attrName);
@@ -255,7 +263,9 @@ function writeUVLayer(geom, geometry, attrName, layerIndex) {
 
   const perLoop = attributeToPerLoop(geometry, geometry.attributes[attrName], 2);
   const t_uv = new Float64Array(perLoop.length);
-  for (let i = 0; i < perLoop.length; i++) t_uv[i] = perLoop[i];
+  for (let i = 0; i < perLoop.length; i++) {
+    t_uv[i] = flipUV && (i % 2) === 1 ? 1 - perLoop[i] : perLoop[i];
+  }
   elemDataSingleFloat64Array(layer, 'UV', t_uv);
 
   const n = t_uv.length / 2;

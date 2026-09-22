@@ -13,6 +13,7 @@
  */
 
 import { Vector3 } from 'three';
+import { materialNeedsVFlip } from './data/textureCollector.js';
 import { FBXElem } from './core/FBXElem.js';
 import { encodeBinaryFBX } from './core/encodeBinary.js';
 import { FBX_VERSION } from './constants.js';
@@ -117,6 +118,9 @@ export function writeFBX(sceneData) {
       groups: m.geometry.groups || [],
       slotRemap: m.slotRemap,
       transformCtx: sceneData.transformCtx,
+      flipUV: settings.flipUV === 'auto' || settings.flipUV === undefined
+        ? materialNeedsVFlip(m.object.material)
+        : Boolean(settings.flipUV),
     });
   }
 

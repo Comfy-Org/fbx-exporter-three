@@ -43,6 +43,12 @@ export interface FBXExportOptions {
   fps?: number;
   /** Embed texture image bytes vs reference by path. */
   embedTextures?: boolean;
+  /**
+   * Flip the UV V axis on write. 'auto' (default) decides per mesh from its
+   * textures' `flipY`: glTF-sourced materials are flipped, FBX-sourced ones
+   * are left alone. Pass true/false to force it.
+   */
+  flipUV?: 'auto' | boolean;
   /** Explicit AnimationClip array (otherwise collected from input.animations). */
   animations?: AnimationClipLike[];
   /** Set false to skip the entire AnimStack/Curve emit. */

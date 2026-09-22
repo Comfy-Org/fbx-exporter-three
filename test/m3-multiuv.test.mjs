@@ -87,8 +87,8 @@ const findRoot = (t, n) => t.find((x) => x.name === n);
 const findChild = (n, name) => n && n.children.find((c) => c.name === name);
 const findChildren = (n, name) => n ? n.children.filter((c) => c.name === name) : [];
 
-function exportToTree(scene) {
-  const bytes = new FBXExporter().parseSync(scene);
+function exportToTree(scene, options) {
+  const bytes = new FBXExporter().parseSync(scene, options);
   return { bytes, tree: parseFBXTree(bytes) };
 }
 
@@ -219,6 +219,50 @@ test('D1: FBXLoader re-imports uv1 as attributes.uv1 (modern naming)', async () 
     }
   }
   assert.ok(differs, 'primary and secondary UV sets carry distinct values');
+});
+
+function uvValuesOf(scene, options) {
+  const { tree } = exportToTree(scene, options);
+  const geo = findRoot(tree, 'Objects').children.find((c) => c.name === 'Geometry');
+  const layer = findChildren(geo, 'LayerElementUV')[0];
+  const prop = findChild(layer, 'UV').props[0];
+  return Array.from(new Float64Array(prop.data.slice().buffer, 0, prop.length));
+}
+
+function texturedQuad(flipY) {
+  const mesh = buildMeshWithUvs({ uv: [0, 0.25, 1, 0.25, 1, 0.75, 0, 0.75] });
+  const texture = new THREE.Texture();
+  texture.flipY = flipY;
+  mesh.material = new THREE.MeshStandardMaterial({ map: texture });
+  const scene = new THREE.Scene();
+  scene.add(mesh);
+  return scene;
+}
+
+const roundV = (values) =>
+  values.filter((_, i) => i % 2 === 1).map((x) => Math.round(x * 100) / 100);
+
+test('V1: FBX-sourced UVs (flipY true) are written unchanged', () => {
+  const v = roundV(uvValuesOf(texturedQuad(true), { embedTextures: false }));
+  assert.deepEqual(v, [0.25, 0.25, 0.75, 0.25, 0.75, 0.75]);
+});
+
+test('V2: glTF-sourced UVs (flipY false) are flipped to the FBX origin', () => {
+  const v = roundV(uvValuesOf(texturedQuad(false), { embedTextures: false }));
+  assert.deepEqual(v, [0.75, 0.75, 0.25, 0.75, 0.25, 0.25]);
+});
+
+test('V3: untextured meshes are left unflipped', () => {
+  const scene = new THREE.Scene();
+  scene.add(buildMeshWithUvs({ uv: [0, 0.25, 1, 0.25, 1, 0.75, 0, 0.75] }));
+  assert.equal(roundV(uvValuesOf(scene))[0], 0.25);
+});
+
+test('V4: flipUV option overrides the per-material decision', () => {
+  const forced = roundV(uvValuesOf(texturedQuad(true), { embedTextures: false, flipUV: true }));
+  assert.equal(forced[0], 0.75);
+  const off = roundV(uvValuesOf(texturedQuad(false), { embedTextures: false, flipUV: false }));
+  assert.equal(off[0], 0.25);
 });
 
 console.log(`\n${passes}/${passes + fails} passed`);

@@ -21,6 +21,23 @@ import {
 import { textureTemplate, videoTemplate } from '../core/templates.js';
 import { encodeTexture } from './textureEncoder.js';
 
+/**
+ * True when a material's textures use the glTF orientation (`flipY === false`,
+ * UV origin top-left), which FBX stores the other way up. Returns false for
+ * untextured materials, where the UV direction has no visible effect.
+ */
+export function materialNeedsVFlip(material) {
+  const list = Array.isArray(material) ? material : [material];
+  for (const entry of list) {
+    if (!entry) continue;
+    for (const slot of Object.keys(TEXTURE_SLOTS)) {
+      const texture = entry[slot];
+      if (texture && texture.isTexture) return texture.flipY === false;
+    }
+  }
+  return false;
+}
+
 export const TEXTURE_SLOTS = {
   map:             'DiffuseColor',
   emissiveMap:     'EmissiveColor',
