@@ -38,6 +38,18 @@ export function materialNeedsVFlip(material) {
   return false;
 }
 
+/**
+ * three.js material slot → FBX texture channel.
+ *
+ * Deliberately absent:
+ *   envMap           'ReflectionColor' is read back as a metallic map (see
+ *                    Blender's import_fbx.py), and a CubeTexture has no single
+ *                    image to encode anyway.
+ *   roughnessMap     the only channels that survive a round trip are
+ *   metalnessMap     ShininessExponent / ReflectionFactor, whose meaning is
+ *                    inverted, and Mixamo's auto-rigger rejects files that
+ *                    carry them.
+ */
 export const TEXTURE_SLOTS = {
   map:             'DiffuseColor',
   emissiveMap:     'EmissiveColor',
@@ -47,7 +59,6 @@ export const TEXTURE_SLOTS = {
   specularMap:     'SpecularColor',
   aoMap:           'Maya|TEX_ao_map',
   displacementMap: 'DisplacementColor',
-  envMap:          'ReflectionColor',
 };
 
 /**

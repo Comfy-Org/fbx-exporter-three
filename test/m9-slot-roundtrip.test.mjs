@@ -62,9 +62,12 @@ test('alphaMap uses TransparentColor (FBXLoader handles this AND TransparencyFac
   assert.equal(TEXTURE_SLOTS.alphaMap, 'TransparentColor');
 });
 
-test('displacementMap + envMap are wired (regression: were missing entirely)', () => {
+test('displacementMap is wired (regression: was missing entirely)', () => {
   assert.equal(TEXTURE_SLOTS.displacementMap, 'DisplacementColor');
-  assert.equal(TEXTURE_SLOTS.envMap,          'ReflectionColor');
+});
+
+test('envMap is NOT in TEXTURE_SLOTS (ReflectionColor reads back as metallic)', () => {
+  assert.ok(!('envMap' in TEXTURE_SLOTS));
 });
 
 test('PBR maps (metalnessMap / roughnessMap) are NOT in TEXTURE_SLOTS', () => {
