@@ -1,6 +1,6 @@
 {
   "name": "@comfyorg/fbx-exporter-three",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "FBX exporter for three.js scenes — binary FBX writer with full skinning, animation, morph targets, lights, cameras and texture embedding.",
   "keywords": [
     "fbx",
